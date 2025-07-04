@@ -11,26 +11,34 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     setAnswer(null);
-
+  
     const res = await fetch("/api/solve", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ errorMessage }),
+      body: JSON.stringify({ errorText: errorMessage }),
     });
-
+  
     const data = await res.json();
-    setAnswer(data.answer || data.error);
+  
+    if (!res.ok) {
+      setAnswer(data.error || "Something went wrong");
+      setLoading(false);
+      return;
+    }
+  
+    setAnswer(data.reply);
     setLoading(false);
   }
+  
 
   return (
     <main className="max-w-xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">🐞 AI Error Helper</h1>
+      <h1 className="text-3xl font-bold mb-6">🐞 BUG OFF - AI Error Helper</h1>
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <textarea
           className="border rounded p-3 resize-none"
           rows={6}
-          placeholder="Paste your error message here..."
+          placeholder="Please paste your error message here..."
           value={errorMessage}
           onChange={(e) => setErrorMessage(e.target.value)}
           required

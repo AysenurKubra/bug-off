@@ -1,35 +1,31 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { openai } from "@/lib/openai";
 
-export async function POST(req: NextRequest) {
-  const { errorMessage } = await req.json();
-
-  if (!errorMessage) {
-    return NextResponse.json({ error: "Error message is required" }, { status: 400 });
-  }
-
+export async function POST(req: Request) {
   try {
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4o",
+    const { errorText } = await req.json();
+
+    if (!errorText || typeof errorText !== "string") {
+      return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo", // Eğer GPT-4 yoksa burayı kullan
       messages: [
         {
           role: "system",
-          content: "You are an assistant that helps developers fix error messages.",
+          content: "You are a helpful assistant that provides solutions for programming error messages.",
         },
         {
           role: "user",
-          content: `Explain and provide a solution for this error message:\n${errorMessage}`,
+          content: errorText,
         },
       ],
-      temperature: 0.4,
-      max_tokens: 500,
     });
 
-    const answer = completion.data.choices[0]?.message?.content;
-
-    return NextResponse.json({ answer });
+    return NextResponse.json({ reply: completion.choices[0].message.content });
   } catch (error) {
     console.error("OpenAI API error:", error);
-    return NextResponse.json({ error: "Failed to fetch AI response." }, { status: 500 });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
